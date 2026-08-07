@@ -1,11 +1,39 @@
 import { NextResponse } from "next/server";
 
 export async function POST(request: Request) {
-  try {
-    const body = await request.json();
-    const { prompt } = body;
+  let body: unknown;
 
-    const query = (prompt || "").toLowerCase();
+  try {
+    body = await request.json();
+  } catch {
+    return NextResponse.json({ error: "Request body must be valid JSON" }, { status: 400 });
+  }
+
+  if (
+    !body ||
+    typeof body !== "object" ||
+    Array.isArray(body) ||
+    typeof (body as { prompt?: unknown }).prompt !== "string"
+  ) {
+    return NextResponse.json({ error: "prompt must be a string" }, { status: 400 });
+  }
+
+  const prompt = (body as { prompt: string }).prompt.trim();
+
+  if (!prompt) {
+    return NextResponse.json({ error: "prompt must not be empty" }, { status: 400 });
+  }
+
+  if (prompt.length > 4_000) {
+    return NextResponse.json(
+      { error: "prompt must not exceed 4000 characters" },
+      { status: 400 }
+    );
+  }
+
+  try {
+
+    const query = prompt.toLowerCase();
 
     let text = "NetworX Cyber Intelligence analyzed your request.";
     let explanation = "Threat baseline evaluation completed against MITRE ATT&CK enterprise catalog.";

@@ -152,7 +152,7 @@ export function NodeDetailDrawer({ nodeData, onClose, onIsolateNode }: NodeDetai
                 onClick={() => onIsolateNode(nodeData.ip)}
                 className="w-full py-2.5 rounded-xl bg-gradient-to-r from-red-600 to-orange-600 hover:from-red-500 hover:to-orange-500 text-white font-semibold text-xs shadow-cyber-red transition-all flex items-center justify-center gap-2"
               >
-                <Terminal className="w-4 h-4" /> Execute Instant Host Isolation
+                <Terminal className="w-4 h-4" /> Simulate Host Isolation
               </button>
             )}
           </div>
