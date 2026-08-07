@@ -10,6 +10,7 @@ export default function AICopilotPage() {
   const [messages, setMessages] = useState<CopilotMessage[]>(INITIAL_COPILOT_MESSAGES);
   const [inputPrompt, setInputPrompt] = useState("");
   const [loading, setLoading] = useState(false);
+  const [requestError, setRequestError] = useState<string | null>(null);
 
   const handleSendMessage = async (queryText?: string) => {
     const textToSend = queryText || inputPrompt;
@@ -25,6 +26,7 @@ export default function AICopilotPage() {
     setMessages((prev) => [...prev, userMsg]);
     setInputPrompt("");
     setLoading(true);
+    setRequestError(null);
 
     try {
       const res = await fetch("/api/copilot", {
@@ -33,6 +35,10 @@ export default function AICopilotPage() {
         body: JSON.stringify({ prompt: textToSend }),
       });
       const data = await res.json();
+
+      if (!res.ok || typeof data.text !== "string") {
+        throw new Error(typeof data.error === "string" ? data.error : "Copilot could not process this request.");
+      }
 
       const aiMsg: CopilotMessage = {
         id: `ai-${Date.now()}`,
@@ -45,8 +51,9 @@ export default function AICopilotPage() {
       };
 
       setMessages((prev) => [...prev, aiMsg]);
-      setLoading(false);
-    } catch {
+    } catch (error) {
+      setRequestError(error instanceof Error ? error.message : "Copilot could not process this request.");
+    } finally {
       setLoading(false);
     }
   };
@@ -199,7 +206,7 @@ export default function AICopilotPage() {
                       <div className="flex items-center justify-between pt-1">
                         {act.approved ? (
                           <div className="flex items-center gap-1.5 text-emerald-400 font-bold">
-                            <CheckCircle2 className="w-4 h-4" /> Action Approved & Dispatched
+                            <CheckCircle2 className="w-4 h-4" /> Action Approved (execution is not configured)
                           </div>
                         ) : act.rejected ? (
                           <div className="flex items-center gap-1.5 text-red-400 font-bold">
@@ -217,7 +224,7 @@ export default function AICopilotPage() {
                               onClick={() => handleApproveAction(msg.id, act.id)}
                               className="px-4 py-1.5 rounded-lg bg-cyber-cyan text-black font-bold shadow-cyber hover:scale-105 transition-all"
                             >
-                              Approve & Execute
+                              Approve Recommendation
                             </button>
                           </div>
                         )}
@@ -236,6 +243,11 @@ export default function AICopilotPage() {
             <span>Copilot analyzing attack telemetry...</span>
           </div>
         )}
+        {requestError && (
+          <div role="alert" className="rounded-xl border border-red-500/40 bg-red-950/50 p-3 text-xs text-red-300">
+            {requestError}
+          </div>
+        )}
       </div>
 
       {/* Input Bar */}
@@ -250,7 +262,9 @@ export default function AICopilotPage() {
         />
         <button
           onClick={() => handleSendMessage()}
-          className="p-3 rounded-xl bg-gradient-to-r from-cyber-cyan to-sky-400 text-black font-bold shadow-cyber hover:scale-105 transition-all"
+          disabled={loading || !inputPrompt.trim()}
+          aria-label="Send message to Copilot"
+          className="p-3 rounded-xl bg-gradient-to-r from-cyber-cyan to-sky-400 text-black font-bold shadow-cyber hover:scale-105 transition-all disabled:cursor-not-allowed disabled:opacity-50"
         >
           <Send className="w-4 h-4" />
         </button>

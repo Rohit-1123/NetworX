@@ -8,20 +8,20 @@ import { Search, ShieldAlert, Cpu, GitPullRequest, Bot, FileText, Zap, X, Termin
 interface CommandPaletteProps {
   isOpen: boolean;
   onClose: () => void;
+  onOpen: () => void;
 }
 
-export function CommandPalette({ isOpen, onClose }: CommandPaletteProps) {
+export function CommandPalette({ isOpen, onClose, onOpen }: CommandPaletteProps) {
   const router = useRouter();
   const [query, setQuery] = useState("");
+  const [selectedIndex, setSelectedIndex] = useState(0);
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if ((e.metaKey || e.ctrlKey) && e.key === "k") {
         e.preventDefault();
         if (isOpen) onClose();
-        else {
-          // Open handled externally or trigger parent
-        }
+        else onOpen();
       }
       if (e.key === "Escape" && isOpen) {
         onClose();
@@ -29,9 +29,7 @@ export function CommandPalette({ isOpen, onClose }: CommandPaletteProps) {
     };
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [isOpen, onClose]);
-
-  if (!isOpen) return null;
+  }, [isOpen, onClose, onOpen]);
 
   const commands = [
     {
@@ -74,10 +72,7 @@ export function CommandPalette({ isOpen, onClose }: CommandPaletteProps) {
       icon: Terminal,
       title: "Isolate Finance Laptop (192.168.1.104)",
       category: "Quick Actions",
-      action: () => {
-        alert("Action Dispatched: Host 192.168.1.104 isolated successfully via NetworX Agent.");
-        onClose();
-      }
+      action: () => { router.push("/dashboard/ai-copilot"); onClose(); }
     },
     {
       icon: Users,
@@ -98,15 +93,40 @@ export function CommandPalette({ isOpen, onClose }: CommandPaletteProps) {
     c.category.toLowerCase().includes(query.toLowerCase())
   );
 
+  useEffect(() => {
+    setSelectedIndex(0);
+  }, [isOpen, query]);
+
+  if (!isOpen) return null;
+
+  const handleInputKeyDown = (event: React.KeyboardEvent<HTMLInputElement>) => {
+    if (filteredCommands.length === 0) return;
+
+    if (event.key === "ArrowDown") {
+      event.preventDefault();
+      setSelectedIndex((index) => Math.min(index + 1, filteredCommands.length - 1));
+    } else if (event.key === "ArrowUp") {
+      event.preventDefault();
+      setSelectedIndex((index) => Math.max(index - 1, 0));
+    } else if (event.key === "Enter") {
+      event.preventDefault();
+      filteredCommands[selectedIndex]?.action();
+    }
+  };
+
   return (
     <AnimatePresence>
-      <div className="fixed inset-0 z-50 flex items-start justify-center pt-24 bg-black/70 backdrop-blur-md">
+      <div className="fixed inset-0 z-50 flex items-start justify-center pt-24 bg-black/70 backdrop-blur-md" role="presentation" onMouseDown={onClose}>
         <motion.div
           initial={{ opacity: 0, scale: 0.95, y: -20 }}
           animate={{ opacity: 1, scale: 1, y: 0 }}
           exit={{ opacity: 0, scale: 0.95, y: -20 }}
           transition={{ duration: 0.2 }}
           className="w-full max-w-2xl bg-cyber-dark/95 border border-cyber-border rounded-xl shadow-cyber overflow-hidden"
+          role="dialog"
+          aria-modal="true"
+          aria-label="Command palette"
+          onMouseDown={(event) => event.stopPropagation()}
         >
           {/* Search Header */}
           <div className="flex items-center px-4 py-3 border-b border-cyber-border bg-slate-900/50">
@@ -115,6 +135,7 @@ export function CommandPalette({ isOpen, onClose }: CommandPaletteProps) {
               type="text"
               value={query}
               onChange={(e) => setQuery(e.target.value)}
+              onKeyDown={handleInputKeyDown}
               placeholder="Type a command, query host IP, or jump to feature... (ESC to exit)"
               className="w-full bg-transparent text-gray-100 placeholder-gray-500 focus:outline-none text-sm"
               autoFocus
@@ -137,7 +158,7 @@ export function CommandPalette({ isOpen, onClose }: CommandPaletteProps) {
                   <button
                     key={idx}
                     onClick={cmd.action}
-                    className="w-full flex items-center justify-between p-3 rounded-lg hover:bg-sky-500/10 hover:border hover:border-cyber-cyan/30 text-left group transition-all"
+                    className={`w-full flex items-center justify-between p-3 rounded-lg hover:bg-sky-500/10 hover:border hover:border-cyber-cyan/30 text-left group transition-all ${idx === selectedIndex ? "bg-sky-500/10 border border-cyber-cyan/30" : ""}`}
                   >
                     <div className="flex items-center space-x-3">
                       <div className="p-2 rounded-lg bg-slate-800 text-cyber-cyan group-hover:bg-cyber-cyan group-hover:text-black transition-colors">

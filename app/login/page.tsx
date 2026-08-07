@@ -9,7 +9,7 @@ import { CyberTwinBackgroundCanvas } from "@/components/cyber/CyberTwinBackgroun
 export default function LoginPage() {
   const router = useRouter();
   const [email, setEmail] = useState("rohit@acme-cyber.com");
-  const [password, setPassword] = useState("••••••••••••");
+  const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
 

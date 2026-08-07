@@ -65,7 +65,7 @@ export default function CyberTwinPage() {
       })
     );
     setSelectedNodeData(null);
-    alert(`Host ${ipToIsolate} successfully isolated from corporate network!`);
+    alert(`Host ${ipToIsolate} marked as isolated in this simulation.`);
   };
 
   // Filtered nodes calculation
@@ -73,6 +73,17 @@ export default function CyberTwinPage() {
     if (filterStatus === "all") return true;
     return n.data.status === filterStatus;
   });
+  const displayedNodeIds = new Set(displayedNodes.map((node) => node.id));
+  const displayedEdges = edges.filter(
+    (edge) => displayedNodeIds.has(edge.source) && displayedNodeIds.has(edge.target)
+  );
+
+  const resetGraph = () => {
+    setNodes(INITIAL_CYBER_NODES.map((node) => ({ ...node, type: "customCyberNode" })) as Node[]);
+    setEdges(INITIAL_CYBER_EDGES as Edge[]);
+    setSelectedNodeData(null);
+    setFilterStatus("all");
+  };
 
   return (
     <div className="h-[calc(100vh-6rem)] flex flex-col space-y-4">
@@ -115,7 +126,7 @@ export default function CyberTwinPage() {
           </div>
 
           <button
-            onClick={() => setNodes(INITIAL_CYBER_NODES.map(n => ({ ...n, type: "customCyberNode" })))}
+            onClick={resetGraph}
             className="p-2 rounded-lg bg-slate-900 border border-slate-800 text-gray-300 hover:text-white hover:border-cyber-cyan/40"
             title="Reset Network Graph"
           >
@@ -128,7 +139,7 @@ export default function CyberTwinPage() {
       <div className="flex-1 w-full bg-slate-950/90 rounded-2xl border border-cyber-border overflow-hidden relative shadow-2xl">
         <ReactFlow
           nodes={displayedNodes}
-          edges={edges}
+          edges={displayedEdges}
           onNodesChange={onNodesChange}
           onEdgesChange={onEdgesChange}
           onConnect={onConnect}

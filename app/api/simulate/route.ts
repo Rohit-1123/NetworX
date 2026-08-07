@@ -2,9 +2,25 @@ import { NextResponse } from "next/server";
 import { RESPONSE_SCENARIOS } from "@/lib/mockData";
 
 export async function POST(request: Request) {
+  let body: unknown;
+
   try {
-    const body = await request.json();
-    const { scenarioId } = body;
+    body = await request.json();
+  } catch {
+    return NextResponse.json({ error: "Request body must be valid JSON" }, { status: 400 });
+  }
+
+  if (
+    !body ||
+    typeof body !== "object" ||
+    Array.isArray(body) ||
+    typeof (body as { scenarioId?: unknown }).scenarioId !== "string"
+  ) {
+    return NextResponse.json({ error: "scenarioId must be a string" }, { status: 400 });
+  }
+
+  try {
+    const { scenarioId } = body as { scenarioId: string };
 
     const scenario = RESPONSE_SCENARIOS.find((s) => s.id === scenarioId);
 

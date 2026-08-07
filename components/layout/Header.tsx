@@ -41,6 +41,7 @@ export function Header() {
         <div className="flex items-center space-x-4">
           <button
             onClick={() => setCommandPaletteOpen(true)}
+            aria-label="Open command palette"
             className="flex items-center space-x-3 px-3 py-1.5 rounded-lg bg-slate-900/80 border border-cyber-border/60 text-gray-400 hover:text-white hover:border-cyber-cyan/40 transition-all text-xs font-mono w-64 md:w-80 group"
           >
             <Search className="w-4 h-4 text-cyber-cyan group-hover:scale-110 transition-transform" />
@@ -76,6 +77,8 @@ export function Header() {
                 setNotificationsOpen(!notificationsOpen);
                 if (unreadCount > 0) setUnreadCount(0);
               }}
+              aria-label="Toggle security alerts"
+              aria-expanded={notificationsOpen}
               className="p-2 rounded-lg bg-slate-900/60 border border-cyber-border/40 text-gray-300 hover:text-cyber-cyan hover:border-cyber-cyan/40 transition-colors relative"
             >
               <Bell className="w-4 h-4" />
@@ -123,7 +126,11 @@ export function Header() {
       </header>
 
       {/* Command Palette Component */}
-      <CommandPalette isOpen={commandPaletteOpen} onClose={() => setCommandPaletteOpen(false)} />
+      <CommandPalette
+        isOpen={commandPaletteOpen}
+        onOpen={() => setCommandPaletteOpen(true)}
+        onClose={() => setCommandPaletteOpen(false)}
+      />
     </>
   );
 }

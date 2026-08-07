@@ -23,12 +23,14 @@ export default function DecisionLabPage() {
   const [selectedScenarioId, setSelectedScenarioId] = useState<"A" | "B" | "C">("A");
   const [simulating, setSimulating] = useState(false);
   const [simResult, setSimResult] = useState<string | null>(null);
+  const [simulationError, setSimulationError] = useState<string | null>(null);
 
   const activeScenario = RESPONSE_SCENARIOS.find((s) => s.id === selectedScenarioId) || RESPONSE_SCENARIOS[0];
 
   const handleRunSimulation = async () => {
     setSimulating(true);
     setSimResult(null);
+    setSimulationError(null);
 
     try {
       const res = await fetch("/api/simulate", {
@@ -37,11 +39,16 @@ export default function DecisionLabPage() {
         body: JSON.stringify({ scenarioId: selectedScenarioId }),
       });
       const data = await res.json();
-      setSimulating(false);
+
+      if (!res.ok || !data.metrics) {
+        throw new Error(typeof data.error === "string" ? data.error : "The simulation could not be completed.");
+      }
+
       setSimResult(`Simulation Complete: Strategy ${selectedScenarioId} achieves ${data.metrics.successProbability} containment with ${data.metrics.containedIn} downtime.`);
-    } catch {
+    } catch (error) {
+      setSimulationError(error instanceof Error ? error.message : "The simulation could not be completed.");
+    } finally {
       setSimulating(false);
-      setSimResult("Simulation calculated offline successfully.");
     }
   };
 
@@ -93,6 +100,12 @@ export default function DecisionLabPage() {
           <span>{simResult}</span>
         </div>
       )}
+      {simulationError && (
+        <div role="alert" className="p-4 rounded-xl bg-red-950/60 border border-red-500/40 text-red-300 text-xs font-mono flex items-center gap-2">
+          <AlertTriangle className="w-5 h-5 shrink-0" />
+          <span>{simulationError}</span>
+        </div>
+      )}
 
       {/* SCENARIO COMPARISON CARDS */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -100,9 +113,11 @@ export default function DecisionLabPage() {
           const isSelected = s.id === selectedScenarioId;
 
           return (
-            <div
+            <button
               key={s.id}
+              type="button"
               onClick={() => setSelectedScenarioId(s.id)}
+              aria-pressed={isSelected}
               className={cn(
                 "p-6 rounded-2xl border transition-all cursor-pointer flex flex-col justify-between space-y-4",
                 isSelected
@@ -154,7 +169,7 @@ export default function DecisionLabPage() {
               <p className="text-xs text-gray-300 font-sans italic border-t border-slate-800 pt-3">
                 {s.aiRecommendation}
               </p>
-            </div>
+            </button>
           );
         })}
       </div>
